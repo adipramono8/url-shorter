@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 import dbModel, schemas, shorterLogic
+import auth
 
 # Finding a long URL in DB
 def get_long_url(db: Session, long_url: str):
@@ -30,3 +31,19 @@ def create_short_url(db: Session, link: schemas.newURL) -> dbModel.Link:
     db.commit()
     db.refresh(db_link)
     return db_link
+
+# Getting all links created by a specific user
+def get_links_by_user(db: Session, user_id: int):
+    return db.query(dbModel.Link).filter(dbModel.Link.owner_id == user_id).all()
+
+# Getting user by email
+def get_user_by_email(db: Session, email: str):
+    return db.query(dbModel.User).filter(dbModel.User.email == email).first()
+
+def create_user(db: Session, user: schemas.UserCreate):
+    hashed_password = auth.get_password_hash(user.password)
+    db_user = dbModel.User(email=user.email, hashed_password=hashed_password)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
